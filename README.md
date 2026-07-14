@@ -15,5 +15,5 @@ The current package API still uses the template `sample` export.
 ```typescript
 import { sample } from '@robert.tools/google';
 
-sample('hello'); // 'sample: hello'
+sample('hello'); // Temporary template export until the Google-specific API is implemented.
 ```
