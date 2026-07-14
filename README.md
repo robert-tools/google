@@ -1,17 +1,19 @@
-# @robert.tools/sample
+# @robert.tools/google
 
-A sample package for robert.tools.
+Google package for robert.tools.
 
 ## Installation
 
 ```bash
-npm install @robert.tools/sample
+npm install @robert.tools/google
 ```
 
 ## Usage
 
-```typescript
-import { sample } from '@robert.tools/sample';
+The current package API still uses the template `sample` export.
 
-sample('hello'); // 'sample: hello'
+```typescript
+import { sample } from '@robert.tools/google';
+
+sample('hello'); // Temporary template export until the Google-specific API is implemented.
 ```
