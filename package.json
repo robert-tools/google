@@ -54,5 +54,7 @@
         "typescript": "^5.9.0"
     },
     "dependencies": {
+        "@robert.tools/cmd": "^1.0.0",
+        "@robert.tools/convert": "^1.0.0"
     }
 }
