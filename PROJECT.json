@@ -1,7 +1,7 @@
 {
     "$schema": "https://willi84.github.io/project-tracking-record/project.schema.json",
-    "🗂️ name": "@robert.tools/sample",
-    "🎯 goal": "A sample package",
+    "🗂️ name": "@robert.tools/google",
+    "🎯 goal": "A package to access Google Workspace",
     "🔖 version": "1.0.0",
     "📄 id": "ROB-005",
     "⚖️ license": "MIT",

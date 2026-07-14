@@ -1,17 +1,15 @@
-# @robert.tools/sample
+# @robert.tools/google
 
-A sample package for robert.tools.
+A package to access Google Workspace
 
 ## Installation
 
 ```bash
-npm install @robert.tools/sample
+npm install @robert.tools/google
 ```
 
 ## Usage
 
 ```typescript
-import { sample } from '@robert.tools/sample';
 
-sample('hello'); // 'sample: hello'
 ```
