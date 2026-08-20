@@ -1,94 +1,72 @@
+/**
+ * 🎯 A utility class for handling Google Sheets
+ * @module backend/_shared/GOOGLE
+ * @example GOOGLE.getTabData('sheetId', 'tabName');
+ * @version 0.0.1
+ * @date 2025-09-19
+ * @license MIT
+ * @author Robert Willemelis <github.com/willi84>
+ */
+
 import { command } from '@robert.tools/cmd';
-import { normalizeText } from '@robert.tools/convert';
+import type { SHEET_ITEMS, SHEET_RAW } from './index.d';
+import {
+    getCellValue,
+    getLabelsFromData,
+    parseGoogleVisualizationJson,
+} from './_shared/parse/parse';
+import { SHEET_URL } from './index.config';
 
-const SHEET_URL =
-    'https://docs.google.com/spreadsheets/d/{id}/gviz/tq?tqx=out:json&sheet={tab}';
-
-/**
- * 🎯 parse the Google Visualization JSONP response
- * @param {string} text the JSONP response text
- * @returns {object} the parsed JSON object
- */
-export const parseGoogleVisualizationJson = (text: string) => {
-    const match = String(text || '').match(
-        /google\.visualization\.Query\.setResponse\((.*)\);?\s*$/s
-    );
-    if (!match) {
-        throw new Error('Could not parse Google Sheets response');
-    }
-
-    return JSON.parse(match[1]);
-};
-
-/**
- * 🎯 get the value of a cell, handling null and undefined values
- * @param {*} cell the cell object
- * @returns {string} the cell value
- */
-export const getCellValue = (cell: any) => {
-    return cell?.v ?? '';
-};
-
-export const rowToValues = (row: any) => {
-    return (row?.c || []).map((cell: any) =>
-        String(getCellValue(cell) || '').trim()
-    );
-};
-
-export const detectColumnsFromHeader = (rows: any[]) => {
-    const firstRow = rows[0];
-    const values = rowToValues(firstRow);
-
-    let keyColumn = -1;
-    let contextColumn = -1;
-
-    for (let index = 0; index < values.length; index += 1) {
-        const normalized = normalizeText(values[index]);
-
-        if (normalized === 'key') {
-            keyColumn = index;
-        }
-
-        if (normalized === 'kontext') {
-            contextColumn = index;
-        }
-    }
-
-    return { keyColumn, contextColumn };
-};
-
-export const extractSheetData = (sheetJson: any) => {
-    const rows = sheetJson?.table?.rows || [];
-    const { keyColumn, contextColumn } = detectColumnsFromHeader(rows);
-
-    if (keyColumn === -1 || contextColumn === -1) {
-        throw new Error(
-            'Could not detect KEY and Kontext columns from sheet header'
-        );
-    }
-
-    const matchers = [];
-
-    for (const row of rows.slice(1)) {
-        const values = rowToValues(row);
-        const key = values[keyColumn] || '';
-        const context = values[contextColumn] || '';
-
-        if (!key || !context) {
-            continue;
-        }
-
-        matchers.push({
-            key: normalizeText(key),
-            context,
-        });
-    }
-
-    return { matchers, keyColumn, contextColumn };
-};
-
-export const getSheetData = (id: string, tab: string) => {
-    const googleSheetUrl = SHEET_URL.replace('{id}', id).replace('{tab}', tab);
-    const text = command(`curl -s "${googleSheetUrl}"`);
+const getRawData = (id: string, tab: string): SHEET_RAW => {
+    const url = SHEET_URL.replace('{id}', id).replace('{tab}', tab);
+    const text = command(`curl -s "${url}"`);
     return parseGoogleVisualizationJson(text);
 };
+
+const getTabData = (id: string, tab: string): SHEET_ITEMS => {
+    const raw = getRawData(id, tab);
+    const items = [];
+    const labels = getLabelsFromData(raw);
+    const start = labels.start;
+    for (let i = start; i < raw.table.rows.length; i += 1) {
+        const row = raw.table.rows[i];
+        const entry: { [key: string]: any } = {};
+        for (const [index, cell] of row.c.entries()) {
+            const key = labels.labels[index];
+            entry[key] = getCellValue(cell);
+        }
+        items.push(entry);
+    }
+    return items;
+};
+const getLabels = (id: string, tab: string): string[] => {
+    const raw = getRawData(id, tab);
+    const labels = getLabelsFromData(raw);
+    return labels.labels;
+};
+
+export class GOOGLE {
+    /**
+     * 🎯 Get the raw data of a specific tab and google file
+     * @param {string} id ➡️ The ID of the Google Sheet.
+     * @param {string} tab ➡️ The name of the tab within the Google Sheet.
+     * @returns {SHEET_RAW} 📤 The raw data of the specified tab.
+     */
+    static getRawData = getRawData;
+
+    /**
+     * 🎯 Get the data of a specific tab and google file in a pre-formatted table
+     * @param {string} id ➡️ The ID of the Google Sheet.
+     * @param {string} tab ➡️ The name of the tab within the Google Sheet.
+     * @returns {SHEET_ITEMS} 📤 The data of the specified tab in a pre-formatted table.
+     */
+    static getTabData = getTabData;
+
+    /**
+     * 🎯 Get the labels of a specific tab and google file
+     * @param {string} id ➡️ The ID of the Google Sheet.
+     * @param {string} tab ➡️ The name of the tab within the Google Sheet.
+     * @returns {string[]} 📤 The labels of the specified tab.
+     */
+    static getLabels = getLabels;
+}

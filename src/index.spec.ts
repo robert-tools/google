@@ -1,12 +1,8 @@
-import {
-    detectColumnsFromHeader,
-    extractSheetData,
-    getCellValue,
-    parseGoogleVisualizationJson,
-    rowToValues,
-} from './index';
+import { RAW_OLD_TABLE, RAW_TEMPLATE_TABLE } from './_shared/parse/parse.spec';
+import { getJSONP, mockResponse } from './_shared/testing/testing';
+import { GOOGLE } from './index';
 
-const RAW = {
+const RAW_OLD = {
     version: '0.6',
     reqId: '0',
     status: 'ok',
@@ -18,9 +14,9 @@ const RAW = {
             { id: 'C', label: '', type: 'string' },
             { id: 'D', label: '', type: 'string' },
             { id: 'E', label: '', type: 'string' },
-            { id: 'F', label: '', type: 'string' },
-            { id: 'G', label: '', type: 'string' },
-            { id: 'H', label: '', type: 'string' },
+            // { id: 'F', label: '', type: 'string' },
+            // { id: 'G', label: '', type: 'string' },
+            // { id: 'H', label: '', type: 'string' },
         ],
         rows: [
             {
@@ -30,9 +26,6 @@ const RAW = {
                     { v: 'ISP' },
                     { v: 'Kontext' },
                     { v: 'Spalte 3' },
-                    { v: 'Spalte 4' },
-                    { v: 'Spalte 5' },
-                    { v: 'Spalte 6' },
                 ],
             },
             {
@@ -42,9 +35,6 @@ const RAW = {
                     { v: 'AS398830 Icomera US, Inc.' },
                     { v: 'DB Fernverkehr' },
                     { v: 'Robert' },
-                    null,
-                    null,
-                    { v: null },
                 ],
             },
             {
@@ -52,11 +42,8 @@ const RAW = {
                     null,
                     { v: 'unwirednetworks' },
                     null,
-                    { v: 'RE60 Rheine - Braunschweig ' },
+                    { v: 'RE60 Rheine  ' },
                     { v: 'Johannes' },
-                    { v: 'https://unwirednetworks.com' },
-                    null,
-                    { v: null },
                 ],
             },
             {
@@ -66,9 +53,6 @@ const RAW = {
                     { v: 'AS207203 TIMEWARP IT Consulting GmbH' },
                     { v: 'ODEG' },
                     { v: 'Robert' },
-                    null,
-                    null,
-                    { v: null },
                 ],
             },
             {
@@ -78,9 +62,6 @@ const RAW = {
                     { v: 'AS210070 Hotsplots GmbH' },
                     { v: 'RMV' },
                     { v: 'Robert' },
-                    null,
-                    null,
-                    { v: null },
                 ],
             },
             {
@@ -90,9 +71,6 @@ const RAW = {
                     { v: 'Deutsche Telekom AG' },
                     { v: 'TEST' },
                     null,
-                    null,
-                    null,
-                    { v: null },
                 ],
             },
             {
@@ -102,9 +80,6 @@ const RAW = {
                     { v: 'AS204445 DB Systel GmbH' },
                     { v: 'wifi@db' },
                     { v: 'Robert' },
-                    null,
-                    { v: 'DB Bahnhof Mainz' },
-                    { v: null },
                 ],
             },
             {
@@ -113,10 +88,7 @@ const RAW = {
                     null,
                     { v: 'AS398830 Icomera US, Inc.' },
                     { v: 'RE14 Mainz-Frankfurt' },
-                    null,
-                    null,
-                    null,
-                    { v: null },
+                    { v: null }, // TODO: testen
                 ],
             },
             {
@@ -140,9 +112,6 @@ const RAW = {
                     { v: 'AS8412 T-Mobile Austria GmbH' },
                     { v: 'MAV' },
                     null,
-                    null,
-                    null,
-                    { v: null },
                 ],
             },
             {
@@ -152,9 +121,6 @@ const RAW = {
                     { v: 'AS25512 CD-Telematika a.s.' },
                     { v: 'CD' },
                     null,
-                    null,
-                    null,
-                    { v: null },
                 ],
             },
         ],
@@ -162,81 +128,82 @@ const RAW = {
     },
 };
 
-const SAMPLE = `/*O_o*/
-google.visualization.Query.setResponse(${JSON.stringify(RAW)});`;
-
-describe('parseGoogleVisualizationJson()', () => {
-    const FN = parseGoogleVisualizationJson;
-
-    it('should parse valid Google Visualization JSONP response', () => {
-        expect(FN(SAMPLE)).toEqual(RAW);
+const id = '1234';
+const tab = 'someTab';
+const targetUrl = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${tab}`;
+const SAMPLE = getJSONP(RAW_OLD);
+describe('✅ getRawData()', () => {
+    const id = '1234';
+    const tab = 'someTab';
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+    it('should return the data for a given tab', () => {
+        const spy = mockResponse(SAMPLE);
+        const FN = GOOGLE.getRawData;
+        expect(FN(id, tab)).toEqual(RAW_OLD);
+        expect(spy).toHaveBeenCalledWith(`curl -s "${targetUrl}"`);
     });
 });
-
-describe('getCellValue()', () => {
-    const FN = getCellValue;
-
-    it('should return the value of a cell', () => {
-        expect(FN({ v: 'test' })).toBe('test');
+describe('✅ getTabData()', () => {
+    const id = '1234';
+    const tab = 'someTab';
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
-
-    it('should return an empty string for null or undefined cells', () => {
-        expect(FN(null)).toBe('');
-        expect(FN(undefined)).toBe('');
-        expect(FN({})).toBe('');
-    });
-});
-
-describe('rowToValues()', () => {
-    const FN = rowToValues;
-
-    it('should convert a row to an array of cell values', () => {
-        const ROW = RAW.table.rows[0];
+    it('should return the data for a given tab in pre-formatted table', () => {
+        const spy = mockResponse(getJSONP(RAW_TEMPLATE_TABLE));
+        const FN = GOOGLE.getTabData;
         const EXPECTED = [
-            'icon',
-            'KEY',
-            'ISP',
-            'Kontext',
-            'Spalte 3',
-            'Spalte 4',
-            'Spalte 5',
-            'Spalte 6',
+            {
+                'LABEL 1': null,
+                'LABEL 2': 'VALUE_2',
+            },
         ];
-        expect(FN(ROW)).toEqual(EXPECTED);
+        expect(FN(id, tab)).toEqual(EXPECTED);
+        expect(spy).toHaveBeenCalledWith(`curl -s "${targetUrl}"`);
     });
-});
-
-describe('detectColumnsFromHeader()', () => {
-    const FN = detectColumnsFromHeader;
-
-    it('should detect the correct columns for KEY and Kontext', () => {
-        const ROWS = RAW.table.rows;
-        const EXPECTED = { keyColumn: 1, contextColumn: 3 };
-        expect(FN(ROWS)).toEqual(EXPECTED);
+    it('should return the data for a given tab in old table', () => {
+        const spy = mockResponse(getJSONP(RAW_OLD_TABLE));
+        const FN = GOOGLE.getTabData;
+        const EXPECTED = [
+            {
+                'OLD_LABEL 1': 2,
+                'OLD_LABEL 2': 'OLD_VALUE_1_2',
+            },
+            {
+                'OLD_LABEL 1': null,
+                'OLD_LABEL 2': 'OLD_VALUE_2_2',
+            },
+        ];
+        expect(FN(id, tab)).toEqual(EXPECTED);
+        expect(spy).toHaveBeenCalledWith(`curl -s "${targetUrl}"`);
     });
-});
-
-describe('extractSheetData()', () => {
-    const FN = extractSheetData;
-
-    it('should extract the matching items', () => {
+    it('should return the data for a given tab in the old kontext', () => {
+        const spy = mockResponse(getJSONP(RAW_OLD));
+        const FN = GOOGLE.getTabData;
         const EXPECTED = {
-            contextColumn: 3,
-            keyColumn: 1,
-            matchers: [
-                { context: 'DB Fernverkehr', key: 'icomera' },
-                {
-                    context: 'RE60 Rheine - Braunschweig',
-                    key: 'unwirednetworks',
-                },
-                { context: 'ODEG', key: 'timewarp' },
-                { context: 'RMV', key: 'hotsplots' },
-                { context: 'TEST', key: 'telekomx' },
-                { context: 'ÖBB', key: 'next layer' },
-                { context: 'CD', key: 'cd-telematika' },
-            ],
+            icon: null,
+            KEY: 'icomera',
+            ISP: 'AS398830 Icomera US, Inc.',
+            Kontext: 'DB Fernverkehr',
+            'Spalte 3': 'Robert',
         };
+        const result = FN(id, tab);
 
-        expect(FN(RAW)).toEqual(EXPECTED);
+        expect(result[0]).toEqual(EXPECTED);
+        expect(spy).toHaveBeenCalledWith(`curl -s "${targetUrl}"`);
+    });
+});
+describe('✅ getLabels()', () => {
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+    it('should return the labels for a given tab in pre-formatted table', () => {
+        const spy = mockResponse(getJSONP(RAW_TEMPLATE_TABLE));
+        const FN = GOOGLE.getLabels;
+        const EXPECTED = ['LABEL 1', 'LABEL 2'];
+        expect(FN(id, tab)).toEqual(EXPECTED);
+        expect(spy).toHaveBeenCalledWith(`curl -s "${targetUrl}"`);
     });
 });
