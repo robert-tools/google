@@ -2,7 +2,7 @@
  * 🎯 A utility class for handling Google Sheets
  * @module backend/_shared/GOOGLE
  * @example GOOGLE.getTabData('sheetId', 'tabName');
- * @version 2.0.0
+ * @version 2.0.1
  * @date 2026-08-20
  * @license MIT
  * @author Robert Willemelis <github.com/willi84>

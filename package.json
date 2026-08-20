@@ -1,6 +1,6 @@
 {
     "name": "@robert.tools/google",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "A package to access Google Workspace",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -17,7 +17,7 @@
         "version": "robi version",
         "verbose": "robi verbose",
         "build": "tsc -p tsconfig.build.json",
-        "publish": "npm publish --access public",
+        "pub": "npm publish --access public",
         "test": "jest --coverage --runInBand --verbose",
         "lint": "eslint .",
         "check": "npm run lint && npm test && npm run build",
