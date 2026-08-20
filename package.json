@@ -17,6 +17,7 @@
         "version": "robi version",
         "verbose": "robi verbose",
         "build": "tsc -p tsconfig.build.json",
+        "publish": "npm publish --access public",
         "test": "jest --coverage --runInBand --verbose",
         "lint": "eslint .",
         "check": "npm run lint && npm test && npm run build",
